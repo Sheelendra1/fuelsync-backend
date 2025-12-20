@@ -1,6 +1,7 @@
 const Transaction = require('../models/Transaction');
 const User = require('../models/User');
 const FuelPrice = require('../models/FuelPrice');
+const { createNotification } = require('./notificationController');
 
 // Get customers for transaction dropdown
 exports.getCustomersForTransaction = async (req, res) => {
@@ -8,7 +9,7 @@ exports.getCustomersForTransaction = async (req, res) => {
     const customers = await User.find({ role: 'customer', isActive: true })
       .select('name email phone vehicleNumber availablePoints')
       .sort({ name: 1 });
-    
+
     res.json(customers);
   } catch (error) {
     console.error(error);
@@ -19,20 +20,20 @@ exports.getCustomersForTransaction = async (req, res) => {
 // Create new transaction
 exports.createTransaction = async (req, res) => {
   try {
-    const { 
-      customerId, 
-      fuelType, 
-      liters, 
-      paymentMethod, 
-      pumpOperator, 
-      notes, 
+    const {
+      customerId,
+      fuelType,
+      liters,
+      paymentMethod,
+      pumpOperator,
+      notes,
       isDoublePoints,
       redemptionId
     } = req.body;
 
     if (!customerId || !fuelType || !liters) {
-      return res.status(400).json({ 
-        message: 'Please provide customer, fuel type, and liters' 
+      return res.status(400).json({
+        message: 'Please provide customer, fuel type, and liters'
       });
     }
 
@@ -73,8 +74,8 @@ exports.createTransaction = async (req, res) => {
           redemption.processedBy = req.user.id;
           await redemption.save();
         } else {
-          return res.status(400).json({ 
-            message: `Redemption amount (₹${redemption.cashbackAmount}) exceeds transaction amount (₹${totalAmount})` 
+          return res.status(400).json({
+            message: `Redemption amount (₹${redemption.cashbackAmount}) exceeds transaction amount (₹${totalAmount})`
           });
         }
       }
@@ -106,13 +107,22 @@ exports.createTransaction = async (req, res) => {
     customer.availablePoints += transaction.pointsEarned;
     await customer.save();
 
+    // Create notification for customer
+    await createNotification(
+      customerId,
+      'Transaction Recorded',
+      `You earned ${transaction.pointsEarned} points from your ${fuelType} purchase of ${liters}L (₹${totalAmount})`,
+      'transaction',
+      { transactionId: transaction._id }
+    );
+
     const populatedTransaction = await Transaction.findById(transaction._id)
       .populate('customer', 'name email phone');
 
     res.status(201).json({
       success: true,
-      message: redemptionApplied 
-        ? `Transaction recorded with ₹${cashbackAmount} cashback applied` 
+      message: redemptionApplied
+        ? `Transaction recorded with ₹${cashbackAmount} cashback applied`
         : 'Transaction recorded successfully',
       transaction: populatedTransaction,
       cashbackApplied: cashbackAmount,
@@ -133,7 +143,7 @@ exports.getTransactions = async (req, res) => {
     const transactions = await Transaction.find()
       .populate('customer', 'name email phone')
       .sort({ createdAt: -1 });
-    
+
     res.json(transactions);
   } catch (error) {
     console.error(error);
@@ -146,7 +156,7 @@ exports.getMyTransactions = async (req, res) => {
   try {
     const transactions = await Transaction.find({ customer: req.user.id })
       .sort({ createdAt: -1 });
-    
+
     res.json(transactions);
   } catch (error) {
     console.error(error);
@@ -159,7 +169,7 @@ exports.getTransactionById = async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id)
       .populate('customer', 'name email phone vehicleNumber');
-    
+
     if (transaction) {
       res.json(transaction);
     } else {

@@ -1,5 +1,6 @@
 const RewardRedemption = require('../models/RewardRedemption');
 const User = require('../models/User');
+const { createNotification } = require('./notificationController');
 
 // Create redemption request
 exports.createRedemption = async (req, res) => {
@@ -112,6 +113,25 @@ exports.updateRedemptionStatus = async (req, res) => {
     }
 
     await redemption.save();
+
+    // Create notification for customer
+    if (status === 'approved') {
+      await createNotification(
+        redemption.customer._id,
+        'Redemption Approved! 🎉',
+        `Your redemption request for ${redemption.pointsUsed} points (₹${redemption.cashbackAmount} cashback) has been approved!`,
+        'redemption',
+        { redemptionId: redemption._id }
+      );
+    } else if (status === 'rejected') {
+      await createNotification(
+        redemption.customer._id,
+        'Redemption Rejected',
+        `Your redemption request for ${redemption.pointsUsed} points was rejected. ${notes || ''}`,
+        'redemption',
+        { redemptionId: redemption._id }
+      );
+    }
 
     res.json({
       success: true,
