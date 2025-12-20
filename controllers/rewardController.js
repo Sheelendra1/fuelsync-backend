@@ -29,6 +29,18 @@ exports.createRedemption = async (req, res) => {
       status: 'pending'
     });
 
+    // Notify all admins about the new redemption request
+    const admins = await User.find({ role: 'admin' });
+    for (const admin of admins) {
+      await createNotification(
+        admin._id,
+        'New Redemption Request',
+        `${customer.name} requested to redeem ${pointsUsed} points (₹${cashbackAmount} cashback)`,
+        'redemption',
+        { redemptionId: redemption._id, customerId: customer._id }
+      );
+    }
+
     res.status(201).json({
       success: true,
       message: 'Redemption request submitted successfully',
