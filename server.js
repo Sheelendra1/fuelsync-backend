@@ -17,6 +17,7 @@ app.use('/api/rewards', require('./routes/rewardRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/fuel-prices', require('./routes/fuelPriceRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/support', require('./routes/supportRoutes'));
 
 // Test route
 app.get('/', (req, res) => {
