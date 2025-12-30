@@ -18,6 +18,8 @@ const createOrder = async (req, res) => {
             fuelType,
             liters,
             totalAmount,
+            creditsApplied = 0,
+            finalAmount,
             paymentMethod,
             paymentId,
             paymentDetails
@@ -49,8 +51,32 @@ const createOrder = async (req, res) => {
             });
         }
 
-        // Calculate points (1 point per 10 rupees spent)
-        const pointsEarned = Math.floor(totalAmount / 10);
+        // Validate credits if applying
+        let actualCreditsApplied = 0;
+        if (creditsApplied > 0) {
+            // Check if customer has enough credits
+            if ((customer.availablePoints || 0) < creditsApplied) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient credits. Available: ₹${customer.availablePoints || 0}`
+                });
+            }
+            // Credits must be at least ₹10 to apply
+            if (creditsApplied < 10) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Minimum ₹10 credits required to apply'
+                });
+            }
+            actualCreditsApplied = Math.min(creditsApplied, totalAmount);
+        }
+
+        // Calculate final amount after credits
+        const actualFinalAmount = finalAmount || (totalAmount - actualCreditsApplied);
+
+        // Calculate points: 1 point per ₹50 spent on actual payment (not credits)
+        // 1 point = 1 rupee fuel credit
+        const pointsEarned = parseFloat((actualFinalAmount / 50).toFixed(2));
 
         // Create order
         const order = new Order({
@@ -63,9 +89,11 @@ const createOrder = async (req, res) => {
             liters,
             pricePerLiter: fuelPrice.pricePerLiter,
             totalAmount,
+            creditsApplied: actualCreditsApplied,
+            finalAmount: actualFinalAmount,
             pointsEarned,
             paymentMethod,
-            paymentStatus: paymentId ? 'paid' : 'pending', // If payment ID exists, payment was successful
+            paymentStatus: paymentId ? 'paid' : 'pending',
             paymentId,
             paymentDetails: paymentDetails || {},
             status: 'pending',
@@ -74,15 +102,25 @@ const createOrder = async (req, res) => {
 
         await order.save();
 
+        // Deduct credits from customer if applied
+        if (actualCreditsApplied > 0) {
+            customer.availablePoints = (customer.availablePoints || 0) - actualCreditsApplied;
+            await customer.save();
+        }
+
         res.status(201).json({
             success: true,
-            message: 'Order created successfully',
+            message: actualCreditsApplied > 0
+                ? `Order created with ₹${actualCreditsApplied} credits applied`
+                : 'Order created successfully',
             order: {
                 orderId: order.orderId,
                 fuelType: order.fuelType,
                 liters: order.liters,
                 pricePerLiter: order.pricePerLiter,
                 totalAmount: order.totalAmount,
+                creditsApplied: order.creditsApplied,
+                finalAmount: order.finalAmount,
                 pointsEarned: order.pointsEarned,
                 paymentMethod: order.paymentMethod,
                 paymentStatus: order.paymentStatus,

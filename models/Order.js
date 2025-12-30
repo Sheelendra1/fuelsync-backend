@@ -49,6 +49,16 @@ const orderSchema = new mongoose.Schema({
         default: 0
     },
 
+    // Fuel Credits Applied
+    creditsApplied: {
+        type: Number,
+        default: 0
+    },
+    finalAmount: {
+        type: Number,
+        default: function () { return this.totalAmount - (this.creditsApplied || 0); }
+    },
+
     // Payment Information
     paymentMethod: {
         type: String,

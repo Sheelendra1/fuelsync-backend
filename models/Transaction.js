@@ -44,7 +44,9 @@ transactionSchema.pre('save', function (next) {
   }
 
   if (this.type === 'fuel') {
-    const points = Math.floor(this.totalAmount / 100);
+    // 1 point per ₹50 spent (float values allowed)
+    // 1 point = 1 rupee fuel credit
+    const points = parseFloat((this.totalAmount / 50).toFixed(2));
     this.pointsEarned = this.isDoublePoints ? points * 2 : points;
 
     if (this.redemptionApplied && this.cashbackAmount) {
