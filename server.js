@@ -18,6 +18,8 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/fuel-prices', require('./routes/fuelPriceRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/support', require('./routes/supportRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
 
 // Test route
 app.get('/', (req, res) => {
