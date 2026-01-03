@@ -444,14 +444,21 @@ const verifyOrder = async (req, res) => {
         if (qrData) {
             try {
                 const parsed = JSON.parse(qrData);
-                order = await Order.findOne({ orderId: parsed.id })
-                    .populate('customerId', 'name email phone');
+                // Handle both 'id' and 'orderId' fields for backward compatibility
+                const orderIdFromQR = parsed.id || parsed.orderId;
+                if (orderIdFromQR) {
+                    order = await Order.findOne({ orderId: orderIdFromQR })
+                        .populate('customerId', 'name email phone');
+                }
             } catch (e) {
                 // QR data might just be the order ID string
                 order = await Order.findOne({ orderId: qrData })
                     .populate('customerId', 'name email phone');
             }
-        } else if (orderId) {
+        }
+
+        // If no order found yet, try with the orderId parameter
+        if (!order && orderId) {
             order = await Order.findOne({ orderId })
                 .populate('customerId', 'name email phone');
         }
