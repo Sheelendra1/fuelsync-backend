@@ -13,7 +13,7 @@ app.use(cors({ origin: '*' }));
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/transactions', require('./routes/transactionRoutes'));
-app.use('/api/rewards', require('./routes/rewardRoutes'));
+// app.use('/api/rewards', require('./routes/rewardRoutes')); // DEPRECATED: Points now used directly in fuel purchases
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/fuel-prices', require('./routes/fuelPriceRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
