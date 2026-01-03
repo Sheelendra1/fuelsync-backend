@@ -1,7 +1,7 @@
 {
-  "name": "fuelsync-backend",
+  "name": "fuelmate-backend",
   "version": "1.0.0",
-  "description": "FuelSync Backend - Petrol Pump Loyalty & Reward Management System",
+  "description": "FuelMate Backend - Petrol Pump Loyalty & Reward Management System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -23,7 +23,7 @@ app.use('/api/payments', require('./routes/paymentRoutes'));
 
 // Test route
 app.get('/', (req, res) => {
-  res.json({ message: 'FuelSync API is running' });
+  res.json({ message: 'FuelMate API is running' });
 });
 
 // Seed initial data
@@ -41,11 +41,11 @@ const seedInitialData = async () => {
     console.log('Initial fuel prices seeded');
   }
 
-  const adminExists = await User.findOne({ email: 'admin@fuelsync.com' });
+  const adminExists = await User.findOne({ email: 'admin@fuelmate.com' });
   if (!adminExists) {
     await User.create({
       name: 'Admin User',
-      email: 'admin@fuelsync.com',
+      email: 'admin@fuelmate.com',
       phone: '9999999999',
       password: 'admin123',
       role: 'admin'
